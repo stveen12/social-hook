@@ -1,35 +1,12 @@
-# LinkedIn Profile PDF Downloader
-An automated LinkedIn scraper that downloads LinkedIn profiles as PDFs. The script offers two main modes: bulk dataset collection from your network and individual profile downloads.LinkedIn Profile PDF Downloader
-This script collects and downloads LinkedIn profiles (as PDFs) from the **“People you may know”** suggestion list.
+# SocialHook - Social Media Profile Scraper Suite
+A collection of automated social media scrapers for LinkedIn and Instagram profile data extraction.
 
 ---
 
-## ⚙️ How It Works
-- **Cookie-based Authentication**: On first run, you log in manually to LinkedIn in Chrome. The script saves your session cookies to `cookies/linkedin_cookies.pkl` for automatic login on subsequent runs.
-- **Automated PDF Generation**: Uses LinkedIn's native "Save to PDF" feature to download profile data.
-- **Smart Profile Detection**: Automatically finds and collects LinkedIn profile URLs from your network suggestions.
-- **Retry Logic**: Built-in retry mechanism for failed downloads to ensure maximum success rate.
-
----
-
-## 🎯 Features
-The script provides an interactive menu with three options:
-
-### 1. Collect Dataset from Network
-- Navigates to LinkedIn's "People you may know" section
-- Automatically clicks "Show all suggestions" if available
-- Allows manual scrolling to load more profiles (up to 1000)
-- Extracts and deduplicates profile URLs
-- Downloads each profile as PDF with progress tracking
-
-### 2. Download Specific User Profile
-- Prompts for individual LinkedIn profile URLs
-- Validates URL format (must contain 'linkedin.com/in/')
-- Downloads the specified profile as PDF
-- Supports multiple downloads in one session
-
-### 3. Exit
-- Safely closes the browser and terminates the script
+## 🧩 Installation
+- Create a virtual environment
+- Install the required libraries 
+`pip install -r requirement.txt`
 
 ---
 
@@ -37,25 +14,66 @@ The script provides an interactive menu with three options:
 ```
 SocialHook/
 ├── cookies/
-│   └── linkedin_cookies.pkl          # Saved login session
+│   ├── linkedin_cookies.pkl
+│   └── instagram_cookies.pkl
 ├── download/
-│   └── linkedin_downloads/           # All PDF downloads
-│       ├── Profile.pdf
-│       ├── Profile (1).pdf
-│       └── ...
-└── linkedin.py                       # Main script
+│   ├── linkedin_downloads/           # LinkedIn PDFs
+│   └── instagram_downloads/          # Instagram data
+├── linkedin.py
+├── instagram.py
+└── requirement.txt
 ```
 
+---
 
-## 🧩 Installation
-- Create a virtual environment
-- Install the required libraries
-- pip install -r requirements.txt
+## 📘 LinkedIn Profile Scraper
+Downloads LinkedIn profiles as PDFs from your network and individual profiles.
 
+### ⚙️ How It Works
+- On first run, log in manually to LinkedIn in Chrome
+- Session cookies saved to `cookies/linkedin_cookies.pkl` for future runs
+- Uses LinkedIn's native "Save to PDF" feature
+- Built-in retry mechanism for failed downloads
 
-# Instagram Scraper
-Upcoming
-# Github Scraper
-Upcoming
-# X Scraper
-Upcoming
+### 🎯 Features
+Interactive menu with three options:
+
+1. **Collect dataset from my network**
+2. **Download specific user profile** 
+3. **Exit**
+
+### 🖱️ Usage Steps
+1. Run `python linkedin.py`
+2. Log in to LinkedIn (first time only)
+3. Choose your option from the menu
+4. For bulk collection: scroll to load profiles, then press Enter
+5. For individual profiles: enter LinkedIn URLs one by one
+
+---
+
+## 📸 Instagram Bio Scraper
+Extracts bio data and profile information from Instagram profiles.
+
+### ⚙️ How It Works
+- Log in manually to Instagram on first run
+- Session cookies saved to `cookies/instagram_cookies.pkl`
+- Scrapes username and bio text from profiles
+- Saves data to text file for analysis
+
+### 🖱️ Usage Steps
+1. Run `python instagram.py`
+2. Log in to Instagram (first time only)
+3. Enter number of profiles to scrape
+4. Input Instagram profile URLs one by one
+5. Data saved to `downloads/instagram_downloads/instagram_biodata.txt`
+
+### 📊 Output Format
+```
+{'username': 'profile_name', 'bio': 'Bio text content...'}
+```
+
+---
+
+##  Upcoming
+- **GitHub Scraper**
+- **X (Twitter) Scraper**
