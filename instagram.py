@@ -88,6 +88,9 @@ def scrape_biodata(driver, wait, profile_url):
 
 
 
+import json
+# ... keep the rest of your code ...
+
 def main():
     driver, wait = setup_driver()
 
@@ -96,7 +99,7 @@ def main():
 
         num_users = int(input("How many Instagram users to scrape? ").strip())
         
-        
+        # Collect all URLs first
         urls = []
         for i in range(num_users):
             url = input(f"Enter Instagram profile URL #{i+1}: ").strip()
@@ -106,17 +109,16 @@ def main():
             urls.append(url)
 
         results = []
-        
+        # Scrape each profile
         for i, url in enumerate(urls, 1):
             data = scrape_biodata(driver, wait, url)
             results.append(data)
             print(f"[{i}/{len(urls)}] ✅ Scraped: {data}")
 
-        
-        out_file = os.path.join(DOWNLOAD_DIR, "instagram_biodata.txt")
+        # Save results to JSON
+        out_file = os.path.join(DOWNLOAD_DIR, "instagram_biodata.json")
         with open(out_file, "w", encoding="utf-8") as f:
-            for r in results:
-                f.write(str(r) + "\n")
+            json.dump(results, f, indent=4, ensure_ascii=False)
 
         print(f"\nAll biodata saved to: {out_file}")
 
