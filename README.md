@@ -26,7 +26,7 @@ SocialHook/
 
 ---
 
-## 📘 LinkedIn Profile Scraper
+## 📘 LinkedIn Profile PDF Scraper
 Downloads LinkedIn profiles as PDFs from your network and individual profiles.
 
 ### ⚙️ How It Works

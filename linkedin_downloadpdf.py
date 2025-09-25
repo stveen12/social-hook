@@ -1,6 +1,6 @@
 import os
 import time
-import pickle
+import json
 from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -10,8 +10,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-COOKIES_FILE = "cookies/linkedin_cookies.pkl"
-DOWNLOAD_DIR = str(Path(__file__).parent / "download" / "linkedin_downloads")
+COOKIES_FILE = "cookies/linkedin_cookies.json"
+DOWNLOAD_DIR = str(Path(__file__).parent / "downloads" / "linkedin_downloads")
 MAX_PROFILES = 1000
 WAIT_SEC = 15
 
@@ -57,8 +57,9 @@ def login_with_cookies(driver):
     time.sleep(2)
 
     if os.path.exists(COOKIES_FILE):
-        with open(COOKIES_FILE, "rb") as f:
-            for c in pickle.load(f):
+        with open(COOKIES_FILE, "r", encoding="utf-8") as f:
+            cookies = json.load(f)
+            for c in cookies:
                 if "domain" in c and c["domain"]:
                     driver.add_cookie(c)
                 else:
@@ -68,8 +69,8 @@ def login_with_cookies(driver):
         time.sleep(2)
     else:
         input("No cookies yet. Log in in the opened window, then press Enter here to save cookies...")
-        with open(COOKIES_FILE, "wb") as f:
-            pickle.dump(driver.get_cookies(), f)
+        with open(COOKIES_FILE, "w", encoding="utf-8") as f:
+            json.dump(driver.get_cookies(), f, indent=4, ensure_ascii=False)
         print("Cookies saved.")
 
 

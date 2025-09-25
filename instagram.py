@@ -1,6 +1,6 @@
 import os
 import time
-import pickle
+import json
 from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -10,7 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-COOKIES_FILE = "cookies/instagram_cookies.pkl"
+COOKIES_FILE = "cookies/instagram_cookies.json"
 DOWNLOAD_DIR = str(Path(__file__).parent / "downloads" / "instagram_downloads")
 WAIT_SEC = 15
 
@@ -41,8 +41,9 @@ def login_with_cookies(driver):
     time.sleep(3)
 
     if os.path.exists(COOKIES_FILE):
-        with open(COOKIES_FILE, "rb") as f:
-            for c in pickle.load(f):
+        with open(COOKIES_FILE, "r", encoding="utf-8") as f:
+            cookies = json.load(f)
+            for c in cookies:
                 if "domain" in c and c["domain"]:
                     driver.add_cookie(c)
                 else:
@@ -52,8 +53,8 @@ def login_with_cookies(driver):
         time.sleep(3)
     else:
         input("No cookies yet. Log in manually in the opened browser, then press Enter here to save cookies...")
-        with open(COOKIES_FILE, "wb") as f:
-            pickle.dump(driver.get_cookies(), f)
+        with open(COOKIES_FILE, "w", encoding="utf-8") as f:
+            json.dump(driver.get_cookies(), f, indent=4, ensure_ascii=False)
         print("Cookies saved.")
 
 
@@ -88,8 +89,7 @@ def scrape_biodata(driver, wait, profile_url):
 
 
 
-import json
-# ... keep the rest of your code ...
+
 
 def main():
     driver, wait = setup_driver()
@@ -99,7 +99,7 @@ def main():
 
         num_users = int(input("How many Instagram users to scrape? ").strip())
         
-        # Collect all URLs first
+        
         urls = []
         for i in range(num_users):
             url = input(f"Enter Instagram profile URL #{i+1}: ").strip()
@@ -109,13 +109,13 @@ def main():
             urls.append(url)
 
         results = []
-        # Scrape each profile
+        
         for i, url in enumerate(urls, 1):
             data = scrape_biodata(driver, wait, url)
             results.append(data)
             print(f"[{i}/{len(urls)}] ✅ Scraped: {data}")
 
-        # Save results to JSON
+        
         out_file = os.path.join(DOWNLOAD_DIR, "instagram_biodata.json")
         with open(out_file, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=4, ensure_ascii=False)
