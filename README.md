@@ -35,6 +35,12 @@ Downloads LinkedIn profiles as PDFs from your network and individual profiles.
 - Uses LinkedIn's native "Save to PDF" feature
 - Built-in retry mechanism for failed downloads
 
+### 🔧 Selenium Data Extraction Process
+1. **Navigate to profile** → Load the LinkedIn profile page
+2. **Click "More actions" button** → Find button with `aria-label='More actions'`
+3. **Click "Save to PDF"** → Locate and click the PDF download option from dropdown
+4. **Automatic download** → LinkedIn generates and downloads the PDF to specified folder
+
 ### 🎯 Features
 Interactive menu with three options:
 
@@ -51,14 +57,21 @@ Interactive menu with three options:
 
 ---
 
-## 📸 Instagram Bio Scraper
-Extracts bio data and profile information from Instagram profiles.
+## 📸 Instagram Profile & Posts Scraper
+Extracts bio data and post captions from Instagram profiles.
 
 ### ⚙️ How It Works
 - Log in manually to Instagram on first run
 - Session cookies saved to `cookies/instagram_cookies.json`
-- Scrapes username and bio text from profiles
+- Scrapes username, bio text, and post captions from profiles
 - Saves data to JSON file for analysis
+
+### 🔧 Selenium Data Extraction Process
+1. **Navigate to profile** → Load the Instagram profile page
+2. **Extract bio data** → Find profile picture, then locate the third `<section>` tag after it to get bio text
+3. **Access posts** → Click the first post using `div._aagw` selector
+4. **Extract captions** → Get post caption from `h1._ap3a._aaco._aacu._aacx._aad7._aade` element
+5. **Navigate posts** → Click next post using `button._abl-` to scrape up to 5 post captions per profile
 
 ### 🖱️ Usage Steps
 1. Run `python instagram.py`
@@ -68,12 +81,20 @@ Extracts bio data and profile information from Instagram profiles.
 5. Data saved to `downloads/instagram_downloads/instagram_biodata.json`
 
 ### 📊 Output Format
-```
-{'username': 'profile_name', 'bio': 'Bio text content...'}
+```json
+{
+  "username": "profile_name", 
+  "bio": "Bio text content...",
+  "captions": [
+    "First post caption text...",
+    "Second post caption text...",
+    "Third post caption text..."
+  ]
+}
 ```
 
 ---
 
-##  Upcoming
+## 🔮 Upcoming
 - **GitHub Scraper**
 - **X (Twitter) Scraper**
