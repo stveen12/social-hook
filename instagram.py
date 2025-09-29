@@ -13,6 +13,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 COOKIES_FILE = "cookies/instagram_cookies.json"
 DOWNLOAD_DIR = str(Path(__file__).parent / "downloads" / "instagram_downloads")
 WAIT_SEC = 15
+TOTAL_POSTS_TO_SCRAPE = 5
 
 
 def setup_driver():
@@ -87,7 +88,7 @@ def scrape_biodata_and_posts(driver, wait, profile_url):
         scraped = 0
         clicked_next = False  
 
-        while scraped < 5:
+        while scraped < TOTAL_POSTS_TO_SCRAPE:
             
             try:
                 caption_el = wait.until(
