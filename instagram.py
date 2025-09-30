@@ -10,8 +10,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-COOKIES_FILE = "cookies/instagram_cookies.json"
-DOWNLOAD_DIR = str(Path(__file__).parent / "downloads" / "instagram_downloads")
+COOKIES_FILE = "credentials/instagram_cookies.json"
+DOWNLOAD_DIR = str(Path(__file__).parent / "data" / "instagram_data")
 WAIT_SEC = 15
 TOTAL_POSTS_TO_SCRAPE = 5
 

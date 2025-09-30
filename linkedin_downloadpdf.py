@@ -10,8 +10,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-COOKIES_FILE = "cookies/linkedin_cookies.json"
-DOWNLOAD_DIR = str(Path(__file__).parent / "downloads" / "linkedin_downloads")
+COOKIES_FILE = "credentials/linkedin_cookies.json"
+DOWNLOAD_DIR = str(Path(__file__).parent / "data" / "linkedin_pdfs_data")
 MAX_PROFILES = 1000
 WAIT_SEC = 15
 

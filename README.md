@@ -1,5 +1,5 @@
 # SocialHook - Social Media Profile Scraper Suite
-A collection of automated social media scrapers for LinkedIn, Instagram, and Twitter/X profile data extraction.
+A collection of automated social media scrapers for LinkedIn, Instagram, Twitter/X, and GitHub profile data extraction.
 
 ---
 
@@ -7,23 +7,27 @@ A collection of automated social media scrapers for LinkedIn, Instagram, and Twi
 - Create a virtual environment
 - Install the required libraries 
 `pip install -r requirement.txt`
+- Create a `credentials/github.env` file with your GitHub token for the GitHub scraper
 
 ---
 
 ## 📂 Output Structure
 ```
 SocialHook/
-├── cookies/
+├── credentials/
 │   ├── linkedin_cookies.json
 │   ├── instagram_cookies.json
-│   └── twitter_cookies.json
-├── downloads/
-│   ├── linkedin_downloads/           # LinkedIn PDFs
-│   ├── instagram_downloads/          # Instagram data
-│   └── twitter_downloads/            # Twitter data
+│   ├── twitter_cookies.json
+│   └── github.env                    # GitHub API token
+├── data/
+│   ├── linkedin_pdfs_data/           # LinkedIn PDFs
+│   ├── instagram_data/               # Instagram data
+│   ├── twitter_data/                 # Twitter data
+│   └── github_data/                  # GitHub data
 ├── linkedin_downloadpdf.py
 ├── instagram.py
 ├── xtwitter.py
+├── github.py
 └── requirement.txt
 ```
 
@@ -34,7 +38,7 @@ Downloads LinkedIn profiles as PDFs from your network and individual profiles.
 
 ### ⚙️ How It Works
 - On first run, log in manually to LinkedIn in Chrome
-- Session cookies saved to `cookies/linkedin_cookies.json` for future runs
+- Session cookies saved to `credentials/linkedin_cookies.json` for future runs
 - Uses LinkedIn's native "Save to PDF" feature
 - Built-in retry mechanism for failed downloads
 
@@ -65,7 +69,7 @@ Extracts bio data and post captions from Instagram profiles.
 
 ### ⚙️ How It Works
 - Log in manually to Instagram on first run
-- Session cookies saved to `cookies/instagram_cookies.json`
+- Session cookies saved to `credentials/instagram_cookies.json`
 - Scrapes username, bio text, and post captions from profiles
 - Saves data to JSON file for analysis
 
@@ -81,7 +85,7 @@ Extracts bio data and post captions from Instagram profiles.
 2. Log in to Instagram (first time only)
 3. Enter number of profiles to scrape
 4. Input Instagram profile URLs one by one
-5. Data saved to `downloads/instagram_downloads/instagram_biodata.json`
+5. Data saved to `data/instagram_data/instagram_biodata.json`
 
 ### 📊 Output Format
 ```json
@@ -103,7 +107,7 @@ Extracts bio data and post captions from Twitter/X profiles.
 
 ### ⚙️ How It Works
 - Log in manually to Twitter/X on first run
-- Session cookies saved to `cookies/twitter_cookies.json`
+- Session cookies saved to `credentials/twitter_cookies.json`
 - Scrapes username, bio text, and post captions from profiles
 - Saves data to JSON file for analysis
 
@@ -119,7 +123,7 @@ Extracts bio data and post captions from Twitter/X profiles.
 2. Log in to Twitter/X (first time only)
 3. Enter number of profiles to scrape
 4. Input Twitter/X profile URLs one by one
-5. Data saved to `downloads/twitter_downloads/twitter_biodata.json`
+5. Data saved to `data/twitter_data/twitter_biodata.json`
 
 ### 📊 Output Format
 ```json
@@ -136,5 +140,49 @@ Extracts bio data and post captions from Twitter/X profiles.
 
 ---
 
+## 🐙 GitHub Profile & Repository Scraper
+Extracts bio data and repository details from GitHub profiles using GitHub API.
+
+### ⚙️ How It Works
+- Uses GitHub REST API v3 for data extraction
+- Requires GitHub personal access token stored in `credentials/github.env`
+- Scrapes user bio, public repository details, and profile README
+- Saves data to JSON file for analysis
+
+### 🔧 API Data Extraction Process
+1. **Get user data** → Call `/users/{username}` endpoint to fetch profile information
+2. **Extract repositories** → Call `/users/{username}/repos` endpoint with pagination to get repository details
+3. **Get profile README** → Call `/repos/{username}/{username}/readme` endpoint to fetch profile README content
+4. **Process data** → Extract name, bio, repo count, stars, forks, and repository URLs
+5. **Save data** → Store first 500 characters of profile README and top 5 repositories
+
+### 🖱️ Usage Steps
+1. Create `credentials/github.env` file with `GITHUB_TOKEN=your_token_here`
+2. Run `python github.py`
+3. Enter number of GitHub users to scrape
+4. Input GitHub usernames one by one
+5. Data saved to `data/github_data/github_biodata.json`
+
+### 📊 Output Format
+```json
+{
+  "name": "Full Name",
+  "login": "username",
+  "bio": "User bio text...",
+  "public_repos": 42,
+  "repos": [
+    {
+      "name": "repo_name",
+      "stars": 123,
+      "forks": 45,
+      "url": "https://github.com/username/repo_name"
+    }
+  ],
+  "profile_readme": "Profile README content..."
+}
+```
+
+---
+
 ## 🔮 Upcoming
-- **GitHub Scraper**
+- **LinkedIn Profile Data Scraper** (bio + experience extraction)

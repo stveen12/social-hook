@@ -1,4 +1,3 @@
-/downloads/
-/cookies/
-/.venv/
-/temp.txt
+/data/
+/credentials/
+/venv/

@@ -11,8 +11,8 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-COOKIES_FILE = "cookies/twitter_cookies.json"
-DOWNLOAD_DIR = str(Path(__file__).parent / "downloads" / "twitter_downloads")
+COOKIES_FILE = "credentials/twitter_cookies.json"
+DOWNLOAD_DIR = str(Path(__file__).parent / "data" / "twitter_data")
 WAIT_SEC = 15
 TOTAL_POSTS_TO_SCRAPE = 5
 
