@@ -1,3 +1,4 @@
 /data/
 /credentials/
 /venv/
+/__pycache__/

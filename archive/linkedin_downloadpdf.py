@@ -166,12 +166,12 @@ def download_specific_user(driver, wait):
             print("Please enter a valid URL.")
             continue
             
-        # Validate URL format
+        
         if "linkedin.com/in/" not in linkedin_url:
             print("Invalid LinkedIn profile URL. Make sure it contains 'linkedin.com/in/'")
             continue
             
-        # Clean the URL
+        
         linkedin_url = linkedin_url.split("?")[0]
         
         try:
@@ -182,7 +182,7 @@ def download_specific_user(driver, wait):
             print(f"✅ Successfully saved PDF for: {linkedin_url}")
             time.sleep(2)
             
-            # Ask if user wants to download another profile
+            
             another = input("Download another profile? (y/n): ").strip().lower()
             if another != 'y':
                 break

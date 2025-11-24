@@ -2,6 +2,7 @@ import os
 import time
 import json
 from pathlib import Path
+from flask import Flask, request, jsonify
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -11,23 +12,14 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 
 COOKIES_FILE = "credentials/instagram_cookies.json"
-DOWNLOAD_DIR = str(Path(__file__).parent / "data" / "instagram_data")
-WAIT_SEC = 15
+WAIT_SEC = 2
 TOTAL_POSTS_TO_SCRAPE = 5
 
 
 def setup_driver():
-    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
     os.makedirs(os.path.dirname(COOKIES_FILE), exist_ok=True)
 
     options = webdriver.ChromeOptions()
-    prefs = {
-        "download.default_directory": DOWNLOAD_DIR,
-        "download.prompt_for_download": False,
-        "download.directory_upgrade": True,
-        "safebrowsing.enabled": True,
-    }
-    options.add_experimental_option("prefs", prefs)
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
@@ -37,7 +29,7 @@ def setup_driver():
     return driver, wait
 
 
-def login_with_cookies(driver):
+def login_with_cookies(driver, wait_sec):
     driver.get("https://www.instagram.com/")
     time.sleep(3)
 
@@ -52,33 +44,105 @@ def login_with_cookies(driver):
                     driver.add_cookie(c)
         driver.refresh()
         time.sleep(3)
+        print("Logged in with cookies.")
+        return
     else:
-        input("No cookies yet. Log in manually in the opened browser, then press Enter here to save cookies...")
+        print("No cookies yet. log in manually in the opened browser")
+        time.sleep(wait_sec)
         with open(COOKIES_FILE, "w", encoding="utf-8") as f:
             json.dump(driver.get_cookies(), f, indent=4, ensure_ascii=False)
         print("Cookies saved.")
+        return
 
-def scrape_biodata_and_posts(driver, wait, profile_url):
-    driver.get(profile_url)
+def scrape_biodata(driver, wait, profile_username):
+    driver.get(profile_username)
     wait.until(EC.presence_of_element_located((By.TAG_NAME, "header")))
     time.sleep(2)
 
-    biodata = {"username": profile_url.rstrip("/").split("/")[-1], "bio": "", "captions": []}
+    username = profile_username.rstrip("/").split("/")[-1]
+    bio = ""
+    profile_image = ""
 
+    try:
+        img = driver.find_element(By.CSS_SELECTOR, "img.xpdipgo.x972fbf.x10w94by.x1qhh985.x14e42zd.xk390pu.x5yr21d.xdj266r.x14z9mp.xat24cr.x1lziwak.xl1xv1r.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x11njtxf.xh8yej3")
+        profile_image = img.get_attribute("src")
+        print(f"  🖼️ Profile image: {profile_image[:60]}...")
+    except Exception as e:
+        print(f"⚠️ Error scraping profile image for {profile_username}: {e}")
+
+    try:
+        bio_spans = driver.find_elements(By.CSS_SELECTOR, "span._ap3a._aaco._aacu._aacx._aad7._aade")
+        if bio_spans:
+            last_span = bio_spans[-1]
+            bio = last_span.text.strip().replace("\n", " ")
+            print(f"  📝 Bio: {bio[:60]}...")
+    except Exception as e:
+        print(f"⚠️ Error scraping bio for {profile_username}: {e}")
+
+    return {
+        "user": {
+            "username": username,
+            "bio": bio,
+            "profile_image": profile_image
+        }
+    }
+
+
+def get_post_images(driver, wait):
+    images = []
     
     try:
-        img = driver.find_element(By.XPATH, f"//img[contains(@alt, \"'s profile picture\")]")
-        section = img.find_element(By.XPATH, "./ancestor::section[1]")
-        all_sections = section.find_elements(By.XPATH, "./ancestor::header[1]/section")
-
-        if len(all_sections) >= 4:
-            bio_section = all_sections[3]
-            biodata["bio"] = bio_section.text.strip().replace("\n", " ")
+        video_elements = driver.find_elements(By.CSS_SELECTOR, "video.x1lliihq.x5yr21d.xh8yej3")
+        if video_elements:
+            src = video_elements[0].get_attribute("src")
+            images.append(src)
+            print(f"    🎥 Video found: {src[:60]}...")
+            return images
+        
+        next_img_button = driver.find_elements(By.CSS_SELECTOR, "button._afxw._al46._al47")
+        
+        if next_img_button:
+            print("    📸 Multiple images detected")
+            while True:
+                try:
+                    ul_elements = driver.find_elements(By.CSS_SELECTOR, "ul._acay")
+                    if ul_elements:
+                        last_ul = ul_elements[-1]
+                        first_li = last_ul.find_element(By.CSS_SELECTOR, "li._acaz")
+                        img = first_li.find_element(By.CSS_SELECTOR, "img.x5yr21d.xu96u03.x10l6tqk.x13vifvy.x87ps6o.xh8yej3")
+                        src = img.get_attribute("src")
+                        images.append(src)
+                        print(f"    📷 Image {len(images)}: {src[:60]}...")
+                    
+                    next_btn = driver.find_elements(By.CSS_SELECTOR, "button._afxw._al46._al47")
+                    if not next_btn:
+                        break
+                    driver.execute_script("arguments[0].click();", next_btn[0])
+                    time.sleep(1)
+                except Exception as e:
+                    print(f"    ⚠️ End of carousel or error: {e}")
+                    break
         else:
-            biodata["bio"] = ""
+            try:
+                div_container = driver.find_element(By.CSS_SELECTOR, "div._aagu._aato")
+                img = div_container.find_element(By.CSS_SELECTOR, "img.x5yr21d.xu96u03.x10l6tqk.x13vifvy.x87ps6o.xh8yej3")
+                src = img.get_attribute("src")
+                images.append(src)
+                print(f"    📷 Single image: {src[:60]}...")
+            except Exception as e:
+                print(f"    ⚠️ Could not get single image: {e}")
+    
     except Exception as e:
-        print(f"⚠️ Error scraping bio for {profile_url}: {e}")
+        print(f"    ⚠️ Error getting images: {e}")
+    
+    return images
 
+
+def scrape_posts(driver, wait, total_posts=None):
+    if total_posts is None:
+        total_posts = TOTAL_POSTS_TO_SCRAPE
+    
+    posts = []
     
     try:
         first_post = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div._aagw")))
@@ -86,9 +150,10 @@ def scrape_biodata_and_posts(driver, wait, profile_url):
         time.sleep(2)
 
         scraped = 0
-        clicked_next = False  
+        clicked_next = False
 
-        while scraped < TOTAL_POSTS_TO_SCRAPE:
+        while scraped < total_posts:
+            post_data = {"caption": "", "images": []}
             
             try:
                 caption_el = wait.until(
@@ -97,31 +162,31 @@ def scrape_biodata_and_posts(driver, wait, profile_url):
                     )
                 )
                 caption = caption_el.text.strip().replace("\n", " ")
-                biodata["captions"].append(caption)
-                scraped += 1
-                print(f"  📝 Post {scraped} caption: {caption[:60]}...")
+                post_data["caption"] = caption
+                print(f"  📝 Post {scraped + 1} caption: {caption[:60]}...")
             except Exception as e:
-                print(f"⚠️ Could not get caption for post {scraped+1}: {e}")
-
+                print(f"  ℹ️ No caption for post {scraped + 1} (image-only post)")
             
+            images = get_post_images(driver, wait)
+            post_data["images"] = images
+            
+            posts.append(post_data)
+            scraped += 1
+
             nav_buttons = driver.find_elements(By.CSS_SELECTOR, "button._abl-")
 
             if len(nav_buttons) == 1:
-                
                 print("ℹ️ Only one post found, stopping.")
                 break
             elif len(nav_buttons) == 2:
                 if not clicked_next:
-                    
                     driver.execute_script("arguments[0].click();", nav_buttons[0])
                     clicked_next = True
                     time.sleep(2)
                 else:
-                    
                     print("ℹ️ Reached last post, stopping.")
                     break
             elif len(nav_buttons) == 3:
-                
                 driver.execute_script("arguments[0].click();", nav_buttons[1])
                 clicked_next = True
                 time.sleep(2)
@@ -130,41 +195,89 @@ def scrape_biodata_and_posts(driver, wait, profile_url):
                 break
 
     except Exception as e:
-        print(f"⚠️ Error scraping posts for {profile_url}: {e}")
+        print(f"⚠️ Error scraping posts: {e}")
 
-    return biodata
+    return posts
 
-def main():
-    driver, wait = setup_driver()
+app = Flask(__name__)
 
+driver = None
+wait = None
+
+def initialize_driver(wait_sec):
+    global driver, wait
+    if driver is None:
+        driver, wait = setup_driver()
+        login_with_cookies(driver, wait_sec)
+    return driver, wait
+
+@app.route('/scrape', methods=['POST'])
+def scrape():
+    data = request.get_json()
+    total_posts = data.get('total_posts', 5) if data else 5
+    
+    if not data or 'usernames' not in data:
+        return jsonify({"error": "Please provide 'usernames' in request body"}), 400
+    
+    usernames = data['usernames']
+    if not isinstance(usernames, list):
+        return jsonify({"error": "'usernames' must be a list"}), 400
+    
     try:
-        login_with_cookies(driver)
-
-        num_users = int(input("How many Instagram users to scrape? ").strip())
-
-        urls = []
-        for i in range(num_users):
-            url = input(f"Enter Instagram profile URL #{i+1}: ").strip()
-            if not url.startswith("http"):
-                print("Invalid URL, skipping.")
-                continue
-            urls.append(url)
-
+        driver, wait = initialize_driver(0)
+        
         results = []
-        for i, url in enumerate(urls, 1):
-            data = scrape_biodata_and_posts(driver, wait, url)
-            results.append(data)
-            print(f"[{i}/{len(urls)}] ✅ Scraped: {data['username']}")
-
-        out_file = os.path.join(DOWNLOAD_DIR, "instagram_biodata.json")
-        with open(out_file, "w", encoding="utf-8") as f:
-            json.dump(results, f, indent=4, ensure_ascii=False)
-
-        print(f"\nAll biodata + captions saved to: {out_file}")
-
-    finally:
+        errors = []
+        
+        for username in usernames:
+            try:
+                profile_url = f"https://www.instagram.com/{username.strip('/')}/" if not username.startswith('http') else username
+                print(f"🔎 Scraping Instagram user: {username}")
+                
+                biodata = scrape_biodata(driver, wait, profile_url)
+                posts = scrape_posts(driver, wait, total_posts=total_posts)
+                user_data = {**biodata, "posts": posts}
+                results.append(user_data)
+                
+            except Exception as e:
+                errors.append({"username": username, "error": str(e)})
+        
+        response = {
+            "success": True,
+            "scraped": len(results),
+            "results": results,
+        }
+        
+        if errors:
+            response["errors"] = errors
+            response["success"] = False
+        
         driver.quit()
+        return jsonify(response)
+    except Exception as e:
+        return jsonify({"error": str(e), "success": False}), 500
 
+@app.route('/sanity', methods=['GET'])
+def health():
+    return jsonify({"status": "ok", "service": "Instagram Scraper"})
+
+@app.route('/login', methods=['POST'])
+def login():
+    global driver
+    data = request.get_json()
+    wait_sec = data.get('wait_sec', 30) if data else 30
+    
+    try:
+        temp_driver, temp_wait = setup_driver()
+        login_with_cookies(temp_driver, wait_sec)
+        
+        return jsonify({"success": True, "message": "Login completed and browser closed"})
+    except Exception as e:
+        if 'temp_driver' in locals():
+            temp_driver.quit()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        temp_driver.quit()
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True, host="0.0.0.0", port=5001)
