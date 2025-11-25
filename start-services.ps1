@@ -44,5 +44,3 @@ Write-Host "  🎯 Handler:   http://localhost:8000" -ForegroundColor White
 Write-Host ""
 Write-Host "Check health: curl http://localhost:8000/sanity" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Press any key to exit (services will continue running)..."
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

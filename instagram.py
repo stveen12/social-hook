@@ -12,7 +12,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 
 COOKIES_FILE = "credentials/instagram_cookies.json"
-WAIT_SEC = 2
+WAIT_SEC = 1
 TOTAL_POSTS_TO_SCRAPE = 5
 
 
@@ -29,9 +29,9 @@ def setup_driver():
     return driver, wait
 
 
-def login_with_cookies(driver, wait_sec):
+def login_with_cookies(driver, login_wait_sec):
     driver.get("https://www.instagram.com/")
-    time.sleep(3)
+    time.sleep(WAIT_SEC)
 
     if os.path.exists(COOKIES_FILE):
         with open(COOKIES_FILE, "r", encoding="utf-8") as f:
@@ -43,12 +43,12 @@ def login_with_cookies(driver, wait_sec):
                     c["domain"] = ".instagram.com"
                     driver.add_cookie(c)
         driver.refresh()
-        time.sleep(3)
+        time.sleep(WAIT_SEC)
         print("Logged in with cookies.")
         return
     else:
         print("No cookies yet. log in manually in the opened browser")
-        time.sleep(wait_sec)
+        time.sleep(login_wait_sec)
         with open(COOKIES_FILE, "w", encoding="utf-8") as f:
             json.dump(driver.get_cookies(), f, indent=4, ensure_ascii=False)
         print("Cookies saved.")
@@ -57,7 +57,7 @@ def login_with_cookies(driver, wait_sec):
 def scrape_biodata(driver, wait, profile_username):
     driver.get(profile_username)
     wait.until(EC.presence_of_element_located((By.TAG_NAME, "header")))
-    time.sleep(2)
+    time.sleep(WAIT_SEC)
 
     username = profile_username.rstrip("/").split("/")[-1]
     bio = ""
@@ -118,7 +118,7 @@ def get_post_images(driver, wait):
                     if not next_btn:
                         break
                     driver.execute_script("arguments[0].click();", next_btn[0])
-                    time.sleep(1)
+                    time.sleep(WAIT_SEC)
                 except Exception as e:
                     print(f"    ⚠️ End of carousel or error: {e}")
                     break
@@ -147,7 +147,7 @@ def scrape_posts(driver, wait, total_posts=None):
     try:
         first_post = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div._aagw")))
         driver.execute_script("arguments[0].click();", first_post)
-        time.sleep(2)
+        time.sleep(WAIT_SEC)
 
         scraped = 0
         clicked_next = False
@@ -182,14 +182,14 @@ def scrape_posts(driver, wait, total_posts=None):
                 if not clicked_next:
                     driver.execute_script("arguments[0].click();", nav_buttons[0])
                     clicked_next = True
-                    time.sleep(2)
+                    time.sleep(WAIT_SEC)
                 else:
                     print("ℹ️ Reached last post, stopping.")
                     break
             elif len(nav_buttons) == 3:
                 driver.execute_script("arguments[0].click();", nav_buttons[1])
                 clicked_next = True
-                time.sleep(2)
+                time.sleep(WAIT_SEC)
             else:
                 print("⚠️ Unexpected button state, stopping.")
                 break
@@ -204,18 +204,19 @@ app = Flask(__name__)
 driver = None
 wait = None
 
-def initialize_driver(wait_sec):
+def initialize_driver(login_wait_sec):
     global driver, wait
     if driver is None:
         driver, wait = setup_driver()
-        login_with_cookies(driver, wait_sec)
+        login_with_cookies(driver, login_wait_sec)
     return driver, wait
 
 @app.route('/scrape', methods=['POST'])
 def scrape():
+    global driver, wait
     data = request.get_json()
     total_posts = data.get('total_posts', 5) if data else 5
-    
+
     if not data or 'usernames' not in data:
         return jsonify({"error": "Please provide 'usernames' in request body"}), 400
     
@@ -253,8 +254,14 @@ def scrape():
             response["success"] = False
         
         driver.quit()
+        driver = None
+        wait = None
         return jsonify(response)
     except Exception as e:
+        if driver:
+            driver.quit()
+            driver = None
+            wait = None
         return jsonify({"error": str(e), "success": False}), 500
 
 @app.route('/sanity', methods=['GET'])
@@ -265,11 +272,11 @@ def health():
 def login():
     global driver
     data = request.get_json()
-    wait_sec = data.get('wait_sec', 30) if data else 30
+    login_wait_sec = data.get('wait_sec', 30) if data else 30
     
     try:
         temp_driver, temp_wait = setup_driver()
-        login_with_cookies(temp_driver, wait_sec)
+        login_with_cookies(temp_driver, login_wait_sec)
         
         return jsonify({"success": True, "message": "Login completed and browser closed"})
     except Exception as e:

@@ -13,7 +13,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 
 COOKIES_FILE = "credentials/twitter_cookies.json"
-WAIT_SEC = 15
+WAIT_SEC = 2
 TOTAL_POSTS_TO_SCRAPE = 5
 
 def setup_driver():
@@ -32,7 +32,7 @@ def setup_driver():
 def login_with_cookies(driver, wait_sec):
     
     driver.get("https://x.com/")
-    time.sleep(3)
+    time.sleep(WAIT_SEC)
 
     if os.path.exists(COOKIES_FILE):
         with open(COOKIES_FILE, "r", encoding="utf-8") as f:
@@ -51,7 +51,7 @@ def login_with_cookies(driver, wait_sec):
                     except Exception as e:
                         print("⚠️ Skipped a cookie due to:", e)
         driver.refresh()
-        time.sleep(3)
+        time.sleep(WAIT_SEC)
         print("Logged in with cookies.")
         return
     else:
@@ -67,7 +67,7 @@ def login_with_cookies(driver, wait_sec):
 def scrape_biodata(driver, wait, profile_url):
     driver.get(profile_url)
     wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-    time.sleep(2)
+    time.sleep(WAIT_SEC)
 
     biodata = {"username": profile_url.rstrip("/").split("/")[-1], "bio": ""}
 
@@ -118,7 +118,7 @@ def scrape_biodata_and_posts(driver, wait, profile_url, total_posts=None):
 
     scraped = 0
     post_index = 1
-    time.sleep(5)
+    time.sleep(WAIT_SEC)
     while scraped < total_posts:
         try:
             
@@ -126,7 +126,7 @@ def scrape_biodata_and_posts(driver, wait, profile_url, total_posts=None):
             post = driver.find_element(By.XPATH, post_xpath)
 
             driver.execute_script("arguments[0].scrollIntoView(true);", post)
-            time.sleep(1)
+            time.sleep(WAIT_SEC)
 
             try:
                 
@@ -144,7 +144,7 @@ def scrape_biodata_and_posts(driver, wait, profile_url, total_posts=None):
 
             post_index += 1
             driver.execute_script("window.scrollBy(0, 600);")
-            time.sleep(2)
+            time.sleep(WAIT_SEC)
 
         except Exception:
             print("ℹ️ No more posts found or reached end of feed.")
@@ -169,6 +169,7 @@ def initialize_driver(wait_sec):
 
 @app.route('/scrape', methods=['POST'])
 def scrape():
+    global driver, wait
     data = request.get_json()
     total_posts = data.get('total_posts', 5) if data else 5
     
@@ -207,9 +208,15 @@ def scrape():
             response["success"] = False
         
         driver.quit()
+        driver = None
+        wait = None
         return jsonify(response)
         
     except Exception as e:
+        if driver:
+            driver.quit()
+            driver = None
+            wait = None
         return jsonify({"error": str(e), "success": False}), 500
 
 @app.route('/sanity', methods=['GET'])
