@@ -9,7 +9,6 @@ INSTAGRAM_PORT = 5001
 XTWITTER_PORT = 5003
 
 def call_github_scraper(github_usernames, total_posts):
-    """Call GitHub scraper service"""
     print(f"🔎 Calling GitHub scraper for {len(github_usernames)} users...")
     try:
         response = requests.post(
@@ -33,7 +32,6 @@ def call_github_scraper(github_usernames, total_posts):
         }
 
 def call_instagram_scraper(instagram_urls, total_posts):
-    """Call Instagram scraper service"""
     print(f"🔎 Calling Instagram scraper for {len(instagram_urls)} users...")
     try:
         response = requests.post(
@@ -57,7 +55,6 @@ def call_instagram_scraper(instagram_urls, total_posts):
         }
 
 def call_xtwitter_scraper(xtwitter_urls, total_posts):
-    """Call Twitter scraper service"""
     print(f"🔎 Calling Twitter scraper for {len(xtwitter_urls)} users...")
     try:
         response = requests.post(

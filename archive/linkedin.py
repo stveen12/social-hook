@@ -303,7 +303,6 @@ def health():
 
 @app.route('/login', methods=['POST'])
 def login():
-    """Initialize driver and login with cookies"""
     global driver
     data = request.get_json()
     wait_sec = data.get('wait_sec', 30) if data else 30
